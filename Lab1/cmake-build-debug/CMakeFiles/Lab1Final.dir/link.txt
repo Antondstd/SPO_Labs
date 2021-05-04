@@ -1,0 +1,1 @@
+/usr/bin/cc -g CMakeFiles/Lab1Final.dir/main.c.o CMakeFiles/Lab1Final.dir/disks_partitions_task/disks_partitions.c.o CMakeFiles/Lab1Final.dir/hfs_task/utils.c.o CMakeFiles/Lab1Final.dir/hfs_task/hfs_structures.c.o -o Lab1Final 
