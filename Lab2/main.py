@@ -5,6 +5,28 @@ from ctypes import *
 so_file = "/home/user/SPO/Lab1Final/lab1lib.so"
 lab1 = CDLL(so_file)
 
+# typedef struct lsFile{
+#     bool type;
+# char *name;
+# }lsFile;
+#
+# typedef struct lsIter{
+#     int size;
+# lsFile *file;
+# }lsIter;
+
+class lsFile(Structure):
+    _fields_ = [
+        ("type", c_bool),
+        ("name", c_char_p)
+    ]
+
+class lsIter(Structure):
+    _fields_ = [
+        ("size", c_int),
+        ("file", POINTER(lsFile))
+    ]
+
 def fsbrowse(fspath):
     hfs = c_void_p(lab1.getHFSPlus(fspath))
     if (hfs.value == None):
@@ -13,7 +35,6 @@ def fsbrowse(fspath):
     exit = False
     while(exit == False):
         inp = raw_input("$:")
-        print(inp)
         if (inp == None or inp == ""):
             continue
         command = split(inp)
@@ -29,6 +50,19 @@ def fsbrowse(fspath):
             else:
                 ls = c_char_p(lab1.ls(hfs, command[1]))
             print(ls.value)
+        elif (command[0] == "newls"):
+            if (len(command) < 2):
+                ls1 = c_void_p(lab1.new_ls(hfs, None))
+            else:
+                ls1 = c_void_p(lab1.new_ls(hfs, command[1]))
+            ls = cast(ls1,POINTER(lsIter))
+            print(type(ls))
+            print(ls[0].size)
+            for i in range(ls[0].size):
+                if (ls[0].file[i].type == True):
+                    print "folder   |   %s" %(ls[0].file[i].name)
+                else:
+                    print "file   |   %s" %(ls[0].file[i].name)
         elif (command[0] == "cd" and len(command) == 2):
             cd = (c_char_p(lab1.cd(hfs, command[1])).value)
             if (cd != None):

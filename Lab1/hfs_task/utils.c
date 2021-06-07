@@ -264,6 +264,38 @@ char *getChildrens(HFSPlus *hfs, uint32_t parent, char *buffer) {
     return buffer;
 }
 
+void *new_getChildrens(HFSPlus *hfs, uint32_t parent, lsIter *buffer) {
+    buffer = malloc(sizeof (lsIter));
+    buffer->file = malloc(1);
+    buffer->size = 0;
+    uint32_t currentNodeID = hfs->catalog->header->firstLeafNode;
+    while (currentNodeID > 0) {
+        Node *node = getNode(currentNodeID, hfs->catalog);
+        for (int i = 0; i < node->descriptor->numRecords; i++) {
+            Record *record = getRecord(i, node);
+            if (strcmp(record->name, "") != 0 && record->key->parentID == parent) {
+                if (record->type == kHFSPlusFolderRecord) {
+                    buffer->size++;
+                    buffer->file = realloc(buffer->file, sizeof(lsFile)*buffer->size);
+                    buffer->file[buffer->size-1].name = calloc(1,strlen(record->name) + 1);
+                    strcpy(buffer->file[buffer->size-1].name,record->name);
+                    buffer->file[buffer->size-1].type = true;
+                } else if (record->type == kHFSPlusFileRecord) {
+                    buffer->size++;
+                    buffer->file = realloc(buffer->file, sizeof(lsFile)*buffer->size);
+                    buffer->file[buffer->size-1].name = calloc(1,strlen(record->name) + 1);
+                    strcpy(buffer->file[buffer->size-1].name,record->name);
+                    buffer->file[buffer->size-1].type = false;
+                }
+            }
+            freeRecord(record);
+        }
+        currentNodeID = node->descriptor->fLink;
+        freeNode(node);
+    }
+    return buffer;
+}
+
 char *ls(HFSPlus *hfs, char *path) {
     char *buffer = malloc(sizeof(char));
     buffer[0] = '\0';
@@ -274,6 +306,20 @@ char *ls(HFSPlus *hfs, char *path) {
         freeRecord(record);
     }
     return getChildrens(hfs, id, buffer);
+}
+
+void* new_ls(HFSPlus *hfs, char *path) {
+    lsIter *buffer = NULL;
+//    buffer = malloc(sizeof (lsIter));
+//    buffer->size = 7;
+//    return buffer;
+    uint32_t id = hfs->pwd;
+    if (path != NULL) {
+        Record *record = getLastRecordFromPath(hfs,path);
+        id = record->id;
+        freeRecord(record);
+    }
+    return new_getChildrens(hfs, id, buffer);
 }
 
 char *recursive_copy(HFSPlus *hfs, Record *record, char *dest, char *message) {
@@ -346,9 +392,9 @@ char *recursive_copy(HFSPlus *hfs, Record *record, char *dest, char *message) {
         }
         if (mkdir(path, 00777) != 0) {
 
-            buffer = calloc(1, strlen("Not able to create a Folder by destination: \n") +
-                               strlen(path) + 1);
-            sprintf(buffer, "Not able to create a Folder by destination: %s\n", path);
+            buffer = calloc(1, strlen("Not able to create a Folder  by destination: \n") +
+                               strlen(path) + strlen(record->name) + 1);
+            sprintf(buffer, "Not able to create a Folder %s by destination: %s\n", record->name,path);
             message = realloc(message, strlen(message) + strlen(buffer) + 1);
             strcat(message, buffer);
             free(buffer);

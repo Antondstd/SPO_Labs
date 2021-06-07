@@ -6,7 +6,7 @@
 #define LAB1FINAL_UTILS_H
 
 #include "hfs_structures.h"
-
+#include <stdbool.h>
 typedef struct BTree {
     void *data;
     BTHeaderRec *header;
@@ -23,6 +23,16 @@ typedef struct Node {
     BTNodeDescriptor *descriptor;
     uint16_t *record_offsets;
 } Node;
+
+typedef struct lsFile{
+    bool type;
+    char *name;
+}lsFile;
+
+typedef struct lsIter{
+    int size;
+    lsFile *file;
+}lsIter;
 
 typedef struct Record {
     void *data;
@@ -55,4 +65,7 @@ char* ls(HFSPlus* hfs, char *path);
 char* f_pwd(HFSPlus *hfs);
 
 char *cp(HFSPlus *hfs, char *source, char *dest);
+
+void* new_getChildrens(HFSPlus *hfs, uint32_t parent, lsIter *buffer);
+void* new_ls(HFSPlus *hfs, char *path);
 #endif //LAB1FINAL_UTILS_H

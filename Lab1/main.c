@@ -28,6 +28,16 @@ int fsbrowse(char *filename) {
             char *message = ls(hfs, source);
             printf("%s", message);
             free(message);
+        }else if (strcmp(command, "newls") == 0) {
+            lsIter *message = new_ls(hfs, source);
+            printf("SIZE : %d\n",message->size);
+            for (int i = 0; i < message->size; i++){
+                if (message->file[i].type)
+                    printf("folder   |   %s\n",message->file[i].name);
+                else
+                    printf("file     |   %s\n",message->file[i].name);
+            }
+            free(message);
         }else if (strcmp(command, "cd") == 0) {
             char *message = cd(hfs, source);
             if (message != NULL) {
